@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CCF 论文雷达 · A/B 类会议 · 2023–2026</title>
+<meta name="description" content="CCF 推荐国际学术会议论文雷达：A/B 类会议 2023–2026 年论文主题分布、趋势与截稿时间一站检索">
+<link rel="stylesheet" href="css/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📡</text></svg>">
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap topbar-in">
+    <a class="brand" href="#/">
+      <span class="brand-icon">📡</span>
+      <span class="brand-txt">CCF <em>论文雷达</em></span>
+    </a>
+    <nav class="nav">
+      <a href="#/" data-nav="overview">总览</a>
+      <a href="#/radar" data-nav="radar">会议雷达</a>
+      <a href="#/ddl" data-nav="ddl">截稿日历</a>
+    </nav>
+    <div class="gsearch" id="gsearch">
+      <input id="gsearch-input" type="text" placeholder="全局模糊检索论文…  ( / )" autocomplete="off">
+      <div class="gsearch-drop" id="gsearch-drop"></div>
+    </div>
+  </div>
+  <div class="ds-bar">
+    <div class="wrap ds-bar-in">
+      <div class="ds-tabs" id="ds-tabs">
+        <button data-ds="a-conf" class="on"><i class="rank a">A</i>CCF A 会议</button>
+        <button data-ds="b-conf"><i class="rank b">B</i>CCF B 会议</button>
+        <button data-ds="a-journal"><i class="rank a">A</i>CCF A 期刊</button>
+        <button data-ds="b-journal"><i class="rank b">B</i>CCF B 期刊</button>
+      </div>
+      <span class="ds-note" id="ds-note"></span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap" id="main">
+
+  <!-- ============ 总览 ============ -->
+  <section id="view-overview" class="view">
+    <div class="hero">
+      <div class="hero-left">
+        <h1 id="hero-title">CCF-A 会议论文雷达</h1>
+        <p class="hero-sub" id="hero-sub">基于 CCF 推荐目录（第七版 · 2026）的 <b id="stat-confs">58</b> 个 <span id="stat-rank">A</span> 类会议，汇集 <b id="stat-papers">—</b> 篇论文（2023.01 – 2026.07），洞察每个会议的研究主题分布与发表趋势。</p>
+        <div class="hero-stats" id="hero-stats"></div>
+      </div>
+      <div class="hero-right">
+        <div class="hero-chart" id="chart-global-trend"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h2>🔥 全局热点主题</h2>
+        <span class="panel-note">按 2023–2026 论文总量排序 · 点击主题查看论文</span>
+      </div>
+      <div class="hot-topics" id="hot-topics"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h2 id="conf-panel-title">🏛️ 58 个 CCF-A 会议</h2>
+        <div class="panel-tools">
+          <div class="chips" id="field-chips"></div>
+          <select id="conf-sort" class="mini-select">
+            <option value="count">按论文数</option>
+            <option value="name">按名称</option>
+            <option value="field">按领域</option>
+          </select>
+        </div>
+      </div>
+      <div class="conf-grid" id="conf-grid"></div>
+    </div>
+  </section>
+
+  <!-- ============ 会议雷达 ============ -->
+  <section id="view-radar" class="view hidden">
+    <div class="radar-head">
+      <div class="conf-picker" id="conf-picker">
+        <input id="conf-picker-input" type="text" placeholder="输入会议名模糊搜索，如 SIGMOD、安全、CV…" autocomplete="off">
+        <div class="conf-picker-drop" id="conf-picker-drop"></div>
+      </div>
+      <div class="radar-conf-info" id="radar-conf-info"></div>
+    </div>
+
+    <div class="radar-grid">
+      <div class="panel radar-panel">
+        <div class="panel-head"><h2>🛰️ 主题雷达</h2><span class="panel-note">点击雷达顶点可筛选论文</span></div>
+        <div class="chart-lg" id="chart-radar"></div>
+        <div class="topic-chips" id="topic-chips"></div>
+      </div>
+      <div class="radar-side">
+        <div class="panel">
+          <div class="panel-head"><h2>📈 年份发表趋势</h2></div>
+          <div class="chart-md" id="chart-year"></div>
+        </div>
+        <div class="panel ddl-card" id="ddl-card"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h2>📄 论文库 <span class="count-badge" id="paper-count"></span></h2>
+        <div class="panel-tools">
+          <input id="paper-search" type="text" placeholder="🔍 标题包含…" autocomplete="off">
+          <input id="paper-author" type="text" placeholder="👤 作者包含…" autocomplete="off">
+          <select id="paper-year" class="mini-select"><option value="">全部年份</option></select>
+          <select id="paper-sort" class="mini-select">
+            <option value="year-desc">年份 新→旧</option>
+            <option value="year-asc">年份 旧→新</option>
+            <option value="title">标题 A→Z</option>
+          </select>
+          <select id="paper-pagesize" class="mini-select" title="每页显示条数">
+            <option value="20">20 条/页</option>
+            <option value="40" selected>40 条/页</option>
+            <option value="80">80 条/页</option>
+            <option value="120">120 条/页</option>
+          </select>
+        </div>
+      </div>
+      <div class="paper-list" id="paper-list"></div>
+      <div class="pager" id="pager"></div>
+    </div>
+  </section>
+
+  <!-- ============ 主题浏览 ============ -->
+  <section id="view-topic" class="view hidden">
+    <div class="panel">
+      <div class="panel-head">
+        <h2>🏷️ <span id="topic-title"></span></h2>
+        <span class="panel-note" id="topic-desc"></span>
+      </div>
+      <div class="chart-md" id="chart-topic-conf" style="height:300px"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head">
+        <h2>📄 主题论文 <span class="count-badge" id="topic-count"></span></h2>
+        <div class="panel-tools">
+          <input id="topic-search" type="text" placeholder="🔍 标题包含…" autocomplete="off">
+          <select id="topic-sort" class="mini-select">
+            <option value="year-desc">年份 新→旧</option>
+            <option value="year-asc">年份 旧→新</option>
+            <option value="title">标题 A→Z</option>
+          </select>
+          <select id="topic-pagesize" class="mini-select" title="每页显示条数">
+            <option value="20">20 条/页</option>
+            <option value="40" selected>40 条/页</option>
+            <option value="80">80 条/页</option>
+            <option value="120">120 条/页</option>
+          </select>
+        </div>
+      </div>
+      <div class="paper-list" id="topic-list"></div>
+      <div class="pager" id="topic-pager"></div>
+    </div>
+  </section>
+
+  <!-- ============ DDL 日历 ============ -->
+  <section id="view-ddl" class="view hidden">
+    <div class="panel">
+      <div class="panel-head">
+        <h2 id="ddl-title">⏰ CCF-A 会议截稿日历</h2>
+        <span class="panel-note">数据来源：CCFDDL（ccfddl/ccf-deadlines）· 时间均为 AoE/UTC-12 或标注时区 · 请以官网为准</span>
+      </div>
+      <div class="ddl-filter chips" id="ddl-field-chips"></div>
+      <div class="ddl-list" id="ddl-list"></div>
+    </div>
+  </section>
+
+  <!-- ============ 期刊（建设中） ============ -->
+  <section id="view-wip" class="view hidden">
+    <div class="panel wip-panel">
+      <div class="wip-icon">🚧</div>
+      <h2 id="wip-title">CCF A 期刊 · 数据建设中</h2>
+      <p class="wip-sub">期刊论文数据正在陆续采集与扩充中，敬请期待。<br>当前可先浏览已完整收录的会议数据集：</p>
+      <div class="wip-actions">
+        <button class="btn" data-goto="a-conf"><i class="rank a">A</i> 看 CCF A 会议</button>
+        <button class="btn" data-goto="b-conf"><i class="rank b">B</i> 看 CCF B 会议</button>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap">
+    <p><b>CCF 论文雷达</b> · 会议名单：CCF 推荐国际学术会议目录（第七版，2026.03） · 论文数据：Semantic Scholar / OpenAlex / Crossref · 截稿时间：<a href="https://ccfddl.com" target="_blank" rel="noopener">CCFDDL</a>（请以各会议官网为准）</p>
+    <p class="dim">覆盖区间 2023.01–2026.07；2026 年部分会议论文尚在收录中，数量为不完全统计。统计口径为主题模型自动归类，仅供参考。</p>
+  </div>
+</footer>
+
+<script src="vendor/echarts.min.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
