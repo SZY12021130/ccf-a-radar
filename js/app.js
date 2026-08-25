@@ -10,8 +10,8 @@ const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'
 const DATASETS = {
   'a-conf':    { prefix:'data/',   kind:'conf',    rank:'A', label:'CCF A 会议', hero:'CCF-A 会议论文雷达', unit:'会议', span:'2023.01–2026.07' },
   'b-conf':    { prefix:'data/b/', kind:'conf',    rank:'B', label:'CCF B 会议', hero:'CCF-B 会议论文雷达', unit:'会议', span:'2023.01–2026.07' },
-  'a-journal': { prefix:'data/j/', kind:'journal', rank:'A', label:'CCF A 期刊', hero:'CCF-A 期刊论文雷达', unit:'期刊', span:'2025.01–2026.08' },
-  'b-journal': { prefix:null,      kind:'journal', rank:'B', label:'CCF B 期刊', unit:'期刊' },
+  'a-journal': { prefix:'data/j/', kind:'journal', rank:'A', label:'CCF A 期刊', hero:'CCF-A 期刊论文雷达', unit:'期刊', span:'2023.01–2026.08' },
+  'b-journal': { prefix:'data/bj/', kind:'journal', rank:'B', label:'CCF B 期刊', hero:'CCF-B 期刊论文雷达', unit:'期刊', span:'2025.01–2026.08' },
 };
 
 const S = {
@@ -229,16 +229,16 @@ async function renderOverview(){
   if (gi) gi.placeholder = `全局模糊检索 ${idx.total.toLocaleString()} 篇论文…  ( / )`;
   // hero stats
   const yrs = idx.yearTotals;
+  const years = Object.keys(yrs).sort();
   $('#hero-stats').innerHTML =
     statHtml(0, `CCF-${d.rank} ${d.unit}`) +
     statHtml(0, '收录论文') +
     statHtml(0, '研究主题') +
-    statHtml(d.kind==='journal' ? '25–26' : '23–26', '年份跨度');
+    statHtml(years[0].slice(2) + '–' + years[years.length-1].slice(2), '年份跨度');
   const statSpans = $$('#hero-stats .stat .v span');
   countUp(statSpans[0], nConf); countUp(statSpans[1], idx.total, 1300); countUp(statSpans[2], idx.topics.length);
   // hero chart: stacked by field
   const fields = fieldsOf(idx);
-  const years = Object.keys(yrs).sort();
   const hc = chart('chart-global-trend');
   if (hc) hc.setOption({
     backgroundColor:'transparent',
@@ -612,7 +612,7 @@ function setupGlobalSearch(){
         const items = groups.get(conf);
         html += `<div class="gs-group" data-c="${esc(conf)}" data-q="${esc(q)}">
           <span class="gs-gname">${esc(conf)}</span>
-          <span class="gs-gcnt">${items.length.toLocaleString()} 条 · 进入该会议检索 →</span>
+          <span class="gs-gcnt">${items.length.toLocaleString()} 条 · 进入该${DS().unit}检索 →</span>
         </div>`;
         for (const [s, it] of items.slice(0, 5)){
           html += `<div class="gs-item" data-u="${esc(it[4]||'')}" data-c="${esc(conf)}">
@@ -622,7 +622,7 @@ function setupGlobalSearch(){
         }
       }
       drop.innerHTML = (html || '<div class="gs-more">😕 无匹配论文</div>')
-        + `<div class="gs-more">共 ${scored.length.toLocaleString()} 条匹配 · 命中 ${groups.size} 个会议 · 点条目访问原文，点分组进会议检索</div>`;
+        + `<div class="gs-more">共 ${scored.length.toLocaleString()} 条匹配 · 命中 ${groups.size} 个${DS().unit} · 点条目访问原文，点分组进${DS().unit}检索</div>`;
       $$('.gs-item').forEach(el=>el.onmousedown=()=>{
         if (el.dataset.u) window.open(el.dataset.u, '_blank');
         else location.hash = '#/radar?c=' + encodeURIComponent(el.dataset.c);
