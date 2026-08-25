@@ -8,10 +8,10 @@ const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'
 
 /* ---------- datasets ---------- */
 const DATASETS = {
-  'a-conf':    { prefix:'data/',   kind:'conf',    rank:'A', label:'CCF A 会议', hero:'CCF-A 会议论文雷达' },
-  'b-conf':    { prefix:'data/b/', kind:'conf',    rank:'B', label:'CCF B 会议', hero:'CCF-B 会议论文雷达' },
-  'a-journal': { prefix:null,      kind:'journal', rank:'A', label:'CCF A 期刊' },
-  'b-journal': { prefix:null,      kind:'journal', rank:'B', label:'CCF B 期刊' },
+  'a-conf':    { prefix:'data/',   kind:'conf',    rank:'A', label:'CCF A 会议', hero:'CCF-A 会议论文雷达', unit:'会议', span:'2023.01–2026.07' },
+  'b-conf':    { prefix:'data/b/', kind:'conf',    rank:'B', label:'CCF B 会议', hero:'CCF-B 会议论文雷达', unit:'会议', span:'2023.01–2026.07' },
+  'a-journal': { prefix:'data/j/', kind:'journal', rank:'A', label:'CCF A 期刊', hero:'CCF-A 期刊论文雷达', unit:'期刊', span:'2025.01–2026.08' },
+  'b-journal': { prefix:null,      kind:'journal', rank:'B', label:'CCF B 期刊', unit:'期刊' },
 };
 
 const S = {
@@ -30,6 +30,7 @@ const S = {
 if (!DATASETS[S.ds]) S.ds = 'a-conf';
 const DS = () => DATASETS[S.ds];
 const isJournal = () => DS().kind === 'journal';
+const isWip = () => !DS().prefix;
 const dataPath = p => DS().prefix + p;
 
 function resetDatasetState(){
@@ -58,14 +59,21 @@ function syncDSUI(){
   $$('#ds-tabs button').forEach(b => b.classList.toggle('on', b.dataset.ds === S.ds));
   const d = DS();
   const gi = $('#gsearch-input');
-  if (d.kind === 'journal'){
-    $('#ds-note').textContent = '期刊数据建设中，敬请期待';
-    if (gi){ gi.disabled = true; gi.placeholder = '期刊数据建设中…'; }
+  if (isWip()){
+    $('#ds-note').textContent = d.label + '数据建设中，敬请期待';
+    if (gi){ gi.disabled = true; gi.placeholder = d.label + '数据建设中…'; }
   } else {
     $('#ds-note').textContent = '';
     if (gi) gi.disabled = false;
   }
-  document.title = (d.kind==='journal' ? d.label + ' · 建设中' : d.hero) + ' · 2023–2026';
+  // unit-aware nav labels
+  const navRadar = $('[data-nav=radar]');
+  if (navRadar) navRadar.textContent = d.unit + '雷达';
+  const navDdl = $('[data-nav=ddl]');
+  if (navDdl) navDdl.style.display = (d.kind === 'journal') ? 'none' : '';
+  const picker = $('#conf-picker-input');
+  if (picker) picker.placeholder = `输入${d.unit}名模糊搜索，如 ${d.kind==='journal' ? 'TPAMI、TSE、TOG…' : 'SIGMOD、安全、CV…'}`;
+  document.title = (isWip() ? d.label + ' · 建设中' : d.hero) + ' · ' + (d.span || '');
 }
 
 function setupDSTabs(){
@@ -173,7 +181,7 @@ function route(){
   const h = location.hash || '#/';
   $$('.view').forEach(v=>v.classList.add('hidden'));
   $$('.nav a').forEach(a=>a.classList.remove('on'));
-  if (isJournal()){
+  if (isWip()){
     $('#wip-title').textContent = DS().label + ' · 数据建设中';
     $('#view-wip').classList.remove('hidden');
     window.scrollTo({top:0});
@@ -211,17 +219,21 @@ async function renderOverview(){
   $('#hero-title').textContent = d.hero;
   $('#stat-confs').textContent = nConf;
   $('#stat-rank').textContent = d.rank;
+  $('#stat-unit').textContent = d.unit;
+  const u2 = $('#stat-unit2'); if (u2) u2.textContent = d.unit;
+  const htn = $('#hot-topics-note'); if (htn) htn.textContent = `按 ${Object.keys(idx.yearTotals).join('–')} 论文总量排序 · 点击主题查看论文`;
   $('#stat-papers').textContent = idx.total.toLocaleString();
-  $('#conf-panel-title').textContent = `🏛️ ${nConf} 个 CCF-${d.rank} 会议`;
+  $('#stat-span').textContent = d.span || '2023.01 – 2026.07';
+  $('#conf-panel-title').textContent = `🏛️ ${nConf} 个 CCF-${d.rank} ${d.unit}`;
   const gi = $('#gsearch-input');
   if (gi) gi.placeholder = `全局模糊检索 ${idx.total.toLocaleString()} 篇论文…  ( / )`;
   // hero stats
   const yrs = idx.yearTotals;
   $('#hero-stats').innerHTML =
-    statHtml(0, `CCF-${d.rank} 会议`) +
+    statHtml(0, `CCF-${d.rank} ${d.unit}`) +
     statHtml(0, '收录论文') +
     statHtml(0, '研究主题') +
-    statHtml('23–26', '年份跨度');
+    statHtml(d.kind==='journal' ? '25–26' : '23–26', '年份跨度');
   const statSpans = $$('#hero-stats .stat .v span');
   countUp(statSpans[0], nConf); countUp(statSpans[1], idx.total, 1300); countUp(statSpans[2], idx.topics.length);
   // hero chart: stacked by field
@@ -423,6 +435,14 @@ async function drawRadarCharts(c){
 function renderDDLCrad(c){
   const el = $('#ddl-card');
   const d = c.ddl;
+  if (DS().kind === 'journal'){
+    el.innerHTML = `<div class="panel-head"><h2>📖 出版信息</h2></div>
+      <div class="ddl-t">${esc(c.abbr)}</div>
+      <div class="ddl-row"><span>出版模式</span><b>滚动出版 · 无截稿时间</b></div>
+      <div class="ddl-row"><span>收录区间</span><b>${esc(DS().span || '')}</b></div>
+      <div style="margin-top:12px"><a href="${esc(c.dblp)}" target="_blank" rel="noopener">DBLP 期刊主页 ↗</a></div>`;
+    return;
+  }
   if (!d){ el.innerHTML = '<div class="panel-head"><h2>⏰ 截稿时间</h2></div><p class="dim">暂无数据</p>'; return; }
   const ddlDate = parseDDL(d.deadline, d.tz);
   const now = new Date();
@@ -681,6 +701,12 @@ async function renderTopicPapers(){
 /* ---------- DDL calendar ---------- */
 async function renderDDL(){
   const idx = await loadIndex();
+  if (DS().kind === 'journal'){
+    $('#ddl-title').textContent = `📖 CCF-${DS().rank} 期刊出版说明`;
+    $('#ddl-field-chips').innerHTML = '';
+    $('#ddl-list').innerHTML = '<div class="loading">期刊为滚动出版，无固定截稿时间。请切换到「会议」分类查看会议截稿日历。</div>';
+    return;
+  }
   $('#ddl-title').textContent = `⏰ CCF-${DS().rank} 会议截稿日历`;
   const fields = [''].concat(fieldsOf(idx));
   $('#ddl-field-chips').innerHTML = fields.map(f=>{
