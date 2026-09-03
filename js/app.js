@@ -26,6 +26,7 @@ const S = {
   overview: { field:'', sort:'count' },
   ddl: { field:'' },
   topic: { id:null, q:'', sort:'year-desc', page:1, pagesize:40 },
+  ret: { stack: [], restore: null }, // 返回导航：来源页栈与待恢复的滚动位置
 };
 if (!DATASETS[S.ds]) S.ds = 'a-conf';
 const DS = () => DATASETS[S.ds];
@@ -50,6 +51,7 @@ function switchDataset(ds){
   if (ds === S.ds){ route(); return; }
   S.ds = ds;
   resetDatasetState();
+  S.ret.stack = []; S.ret.restore = null; // 换数据集后来源页不再对应，清空返回栈
   syncDSUI();
   location.hash = '#/';
   route();
@@ -177,13 +179,24 @@ function topicName(id){
 }
 
 /* ---------- router ---------- */
-function route(){
+async function route(){
   const h = location.hash || '#/';
+  // 无效路由直接重定向，不记入返回栈
+  const valid = h === '#/' || h === '#' || /^#\/radar(\?.*)?$/.test(h) || /^#\/topic\/\d+$/.test(h) || h === '#/ddl' || isWip();
+  if (!valid){ S.ret.skipPush = true; location.hash = '#/'; return; }
+  // 返回导航：跳转前记录来源页与滚动位置
+  if (!S.ret.skipPush && S.ret.cur != null && S.ret.cur !== h){
+    S.ret.stack.push({ hash: S.ret.cur, y: window.scrollY });
+    if (S.ret.stack.length > 30) S.ret.stack.shift();
+  }
+  S.ret.skipPush = false;
+  S.ret.cur = h;
   $$('.view').forEach(v=>v.classList.add('hidden'));
   $$('.nav a').forEach(a=>a.classList.remove('on'));
   if (isWip()){
     $('#wip-title').textContent = DS().label + ' · 数据建设中';
     $('#view-wip').classList.remove('hidden');
+    S.ret.restore = null;
     window.scrollTo({top:0});
     return;
   }
@@ -191,25 +204,46 @@ function route(){
   if (h === '#/' || h === '#') {
     $('#view-overview').classList.remove('hidden');
     $('[data-nav=overview]').classList.add('on');
-    renderOverview();
+    await renderOverview().catch(showDataError);
   } else if (m = h.match(/^#\/radar(?:\?(.*))?$/)) {
     $('#view-radar').classList.remove('hidden');
     $('[data-nav=radar]').classList.add('on');
     const params = new URLSearchParams(m[1] || '');
-    renderRadar(params.get('c'), params.get('q'));
+    await renderRadar(params.get('c'), params.get('q')).catch(showDataError);
   } else if (m = h.match(/^#\/topic\/(\d+)$/)) {
     $('#view-topic').classList.remove('hidden');
-    renderTopic(+m[1]).catch(showDataError);
+    await renderTopic(+m[1]).catch(showDataError);
   } else if (h === '#/ddl') {
     $('#view-ddl').classList.remove('hidden');
     $('[data-nav=ddl]').classList.add('on');
-    renderDDL();
+    await renderDDL().catch(showDataError);
   } else {
     location.hash = '#/';
   }
-  window.scrollTo({top:0});
+  // 返回导航时恢复来源页滚动位置，其余情况回到顶部
+  const restore = S.ret.restore;
+  S.ret.restore = null;
+  if (restore != null) window.scrollTo({ top: restore, behavior: 'instant' });
+  else window.scrollTo({ top: 0 });
+  syncBackBtns();
 }
 window.addEventListener('hashchange', route);
+
+/** 根据返回栈更新返回按钮文案（有来源显示“返回”，否则“返回总览”） */
+function syncBackBtns(){
+  const label = S.ret.stack.length ? '← 返回' : '← 返回总览';
+  $$('.back-btn').forEach(b=>b.textContent = label);
+}
+
+/** 返回上一页（优先恢复来源页与其滚动位置，无来源时回总览顶部） */
+function goBack(){
+  const top = S.ret.stack.pop();
+  const target = (top && top.hash) ? top.hash : '#/';
+  S.ret.restore = top ? (top.y || 0) : null;
+  S.ret.skipPush = true;
+  if ((location.hash || '#/') === target) route();
+  else location.hash = target;
+}
 
 /* ---------- overview ---------- */
 async function renderOverview(){
@@ -758,6 +792,7 @@ function drawDDLList(){
 /* ---------- boot ---------- */
 (async function(){
   setupDSTabs();
+  $$('.back-btn').forEach(b=>b.onclick = goBack);
   if (!isJournal()) await loadIndex();
   setupGlobalSearch();
   route();

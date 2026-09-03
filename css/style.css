@@ -235,3 +235,11 @@ mark{background:transparent;color:var(--gold);font-weight:700}
 .wip-actions{margin-top:26px;display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
 .wip-actions .btn{display:inline-flex;align-items:center;gap:8px;padding:11px 24px;border-radius:12px;border:1px solid #2a3866;background:#141b35;color:#e8ecf8;font-size:14.5px;font-weight:700;cursor:pointer;transition:all .22s;font-family:inherit}
 .wip-actions .btn:hover{border-color:#5b8cff;transform:translateY(-2px);box-shadow:0 8px 22px rgba(91,140,255,.3)}
+
+/* ===== back button ===== */
+.back-row{margin:28px 0 6px}
+.back-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border-radius:10px;
+  border:1px solid var(--line);background:var(--bg2);color:var(--dim);font-size:13.5px;font-weight:600;
+  cursor:pointer;transition:.18s;font-family:inherit;white-space:nowrap}
+.back-btn:hover{border-color:var(--acc);color:#fff;background:var(--panel2);
+  box-shadow:0 4px 14px rgba(91,140,255,.25);transform:translateY(-1px)}
