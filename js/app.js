@@ -299,6 +299,12 @@ function renderConfGrid(){
   const idx = S.index;
   let list = idx.confs.slice();
   if (S.overview.field) list = list.filter(c=>c.field===S.overview.field);
+  const q = (S.overview.q||'').trim();
+  if (q){
+    const ql = q.toLowerCase();
+    list = list.filter(c=>c.abbr.toLowerCase().includes(ql)||c.name.toLowerCase().includes(ql)
+      ||c.field.toLowerCase().includes(ql)||fuzzyScore(q,c.abbr)>=0||fuzzyScore(q,c.name)>=0);
+  }
   if (S.overview.sort==='count') list.sort((a,b)=>b.count-a.count);
   else if (S.overview.sort==='name') list.sort((a,b)=>a.abbr.localeCompare(b.abbr));
   else list.sort((a,b)=>a.field.localeCompare(b.field)||b.count-a.count);
@@ -318,7 +324,7 @@ function renderConfGrid(){
       </div>
       <div class="ttags">${top3}</div>
     </div>`;
-  }).join('');
+  }).join('') || `<div class="gs-more" style="padding:30px">没有匹配的${DS().unit}，换个关键词试试</div>`;
 }
 
 /* ---------- radar (conference detail) ---------- */
@@ -376,9 +382,7 @@ async function drawRadarCharts(c){
   const tops = Object.entries(dist).map(([id,n])=>({id:+id,n})).sort((a,b)=>b.n-a.n);
   const named = tops.filter(x=>x.id!==OTHER_TOPIC);
   const axes = named.slice(0,8);
-  const top8ids = new Set(axes.map(a=>a.id));
-  const otherN = tops.filter(x=>!top8ids.has(x.id)).reduce((s,x)=>s+x.n,0);
-  if (otherN>0) axes.push({id:-1, n:otherN});
+  if (!axes.length) axes.push(...tops.slice(0,8));
   const rc = chart('chart-radar');
   const maxN = Math.max(...axes.map(a=>a.n));
   if (rc){
@@ -386,7 +390,7 @@ async function drawRadarCharts(c){
       backgroundColor:'transparent',
       tooltip:{backgroundColor:'#182244',borderColor:'#26325c',textStyle:{color:'#e8ecf8'}},
       radar:{
-        indicator: axes.map(a=>({name: a.id===-1?'其余主题':topicName(a.id), max: Math.ceil(maxN*1.15)})),
+        indicator: axes.map(a=>({name: topicName(a.id), max: Math.ceil(maxN*1.15)})),
         radius:'68%', center:['50%','52%'], splitNumber:4,
         axisName:{color:'#9db4ff',fontSize:12},
         splitLine:{lineStyle:{color:'#2a3866'}},
@@ -409,7 +413,7 @@ async function drawRadarCharts(c){
   // topic chips
   $('#topic-chips').innerHTML =
     `<span class="chip ${S.radar.topic===null?'on':''}" data-t="">全部主题</span>` +
-    axes.map(a=>`<span class="chip ${S.radar.topic===a.id?'on':''}" data-t="${a.id}" title="${a.n} 篇">${a.id===-1?'其余主题':esc(topicName(a.id))} · ${a.n}</span>`).join('');
+    axes.map(a=>`<span class="chip ${S.radar.topic===a.id?'on':''}" data-t="${a.id}" title="${a.n} 篇">${esc(topicName(a.id))} · ${a.n}</span>`).join('');
   $$('#topic-chips .chip').forEach(ch=>ch.onclick=()=>{
     S.radar.topic = ch.dataset.t===''?null:+ch.dataset.t;
     S.radar.page = 1;
