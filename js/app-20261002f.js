@@ -711,9 +711,9 @@ function setupGlobalSearch(){
           // 缩写首字母匹配，如 tdsc → Transactions on Dependable and Secure Computing
           const acr = tl.split(/[^a-z0-9]+/).filter(Boolean).map(w=>w[0]).join('');
           if (ql.length >= 2 && acr.startsWith(ql)){ s = 8000 - it[0].length*0.01; mode = 'acr'; }
-          else if (ql.length >= 5){        // 子序列模糊仅限较长关键词，且要求足够分数
+          else if (ql.length >= 5){        // 子序列模糊仅限较长关键词，且要求较高连续度
             const fz = fuzzyScore(q, it[0]);
-            if (fz >= ql.length * 8){ s = fz; mode = 'fz'; }
+            if (fz >= ql.length * 10 + ql.length * (ql.length - 1) * 0.5){ s = fz; mode = 'fz'; }
           }
         }
         if (s < 0) continue;
