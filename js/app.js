@@ -31,7 +31,7 @@ if (!DATASETS[S.ds]) S.ds = 'a-conf';
 const DS = () => DATASETS[S.ds];
 const isJournal = () => DS().kind === 'journal';
 const isWip = () => !DS().prefix;
-const dataPath = p => DS().prefix + p;
+const dataPath = p => DS().prefix + p + '?v=' + (window.__BUILD || 'dev');
 
 function resetDatasetState(){
   Object.values(S.charts).forEach(c => c && c.dispose());
