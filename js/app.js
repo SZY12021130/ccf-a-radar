@@ -100,7 +100,7 @@ function showDataError(){
 async function loadPapers(abbr){
   if (S.papersCache[abbr]) return S.papersCache[abbr];
   const c = S.confByAbbr[abbr];
-  const r = await fetch(dataPath('papers/') + encodeURIComponent(c.file) + '.json');
+  const r = await fetch(dataPath('papers/' + c.file + '.json'));
   const p = await r.json();
   S.papersCache[abbr] = p;
   return p;
