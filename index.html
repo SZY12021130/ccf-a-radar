@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CCF 论文雷达 · A/B 类会议 · 2023–2026</title>
 <meta name="description" content="CCF 推荐国际学术会议论文雷达：A/B 类会议 2023–2026 年论文主题分布、趋势与截稿时间一站检索">
-<link rel="stylesheet" href="css/style.css?v=20261002c">
-<script>window.__BUILD='20261002c';</script>
+<link rel="stylesheet" href="css/style.css?v=20261002d">
+<script>window.__BUILD='20261002d';</script>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📡</text></svg>">
 </head>
 <body>
@@ -66,6 +66,7 @@
       <div class="panel-head">
         <h2 id="conf-panel-title">🏛️ 58 个 CCF-A 会议</h2>
         <div class="panel-tools">
+          <input id="conf-q" class="conf-q" type="text" placeholder="🔍 名称模糊搜索…" autocomplete="off">
           <div class="chips" id="field-chips"></div>
           <select id="conf-sort" class="mini-select">
             <option value="count">按论文数</option>
@@ -81,6 +82,7 @@
   <!-- ============ 会议雷达 ============ -->
   <section id="view-radar" class="view hidden">
     <div class="radar-head">
+      <button class="back-btn" onclick="location.hash='#/'" title="返回总览">← 返回</button>
       <div class="conf-picker" id="conf-picker">
         <input id="conf-picker-input" type="text" placeholder="输入会议名模糊搜索，如 SIGMOD、安全、CV…" autocomplete="off">
         <div class="conf-picker-drop" id="conf-picker-drop"></div>
@@ -195,6 +197,6 @@
 </footer>
 
 <script src="vendor/echarts.min.js"></script>
-<script src="js/app.js?v=20261002c"></script>
+<script src="js/app.js?v=20261002d"></script>
 </body>
 </html>
