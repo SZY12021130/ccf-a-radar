@@ -73,6 +73,7 @@ function syncDSUI(){
   if (navDdl) navDdl.style.display = (d.kind === 'journal') ? 'none' : '';
   const picker = $('#conf-picker-input');
   if (picker) picker.placeholder = `输入${d.unit}名模糊搜索，如 ${d.kind==='journal' ? 'TPAMI、TSE、TOG…' : 'SIGMOD、安全、CV…'}`;
+  if (window.__nsearchPh) window.__nsearchPh();
   document.title = (isWip() ? d.label + ' · 建设中' : d.hero) + ' · ' + (d.span || '');
 }
 
@@ -289,6 +290,22 @@ async function renderOverview(){
   $('#conf-sort').value = S.overview.sort;
   $('#conf-sort').onchange = e=>{ S.overview.sort=e.target.value; renderConfGrid(); };
   renderConfGrid();
+  // 从会议/期刊详情返回时：恢复到点击前的位置，并高亮定位刚才那张卡片
+  (function(){
+    let o = null;
+    try{ o = JSON.parse(sessionStorage.getItem('ccf-ov') || 'null'); sessionStorage.removeItem('ccf-ov'); }catch(e){}
+    if (!o) return;
+    requestAnimationFrame(()=>{
+      const el = document.querySelector('.conf-card[data-abbr="' + String(o.c).replace(/"/g,'') + '"]');
+      if (el){
+        el.scrollIntoView({block:'center', behavior:'auto'});
+        el.classList.add('ov-flash');
+        setTimeout(()=>el.classList.remove('ov-flash'), 2000);
+      } else {
+        window.scrollTo(0, o.y || 0);
+      }
+    });
+  })();
 }
 function renderOverviewChipsOnly(){
   $$('#field-chips .chip').forEach(ch=>ch.classList.toggle('on', ch.dataset.f===S.overview.field));
@@ -314,7 +331,7 @@ function renderConfGrid(){
     const spark = years.map(y=>`<i style="height:${((c.years[y]||0)/maxY*100).toFixed(0)}%" title="${y}: ${c.years[y]||0}"></i>`).join('');
     const top3 = c.topics.filter(t=>t.id!==29).slice(0,3).map(t=>`<span class="ttag" title="${esc(topicName(t.id))}">${esc(topicName(t.id))}</span>`).join('');
     const fc = fieldColor(c.field);
-    return `<div class="conf-card" style="--fc:${fc}" onclick="location.hash='#/radar?c=${encodeURIComponent(c.abbr)}'">
+    return `<div class="conf-card" data-abbr="${esc(c.abbr)}" style="--fc:${fc}" onclick="goConf(&quot;${esc(c.abbr)}&quot;)">
       <span class="ftag" style="color:${fc};background:${hexA(fc,.12)};border-color:${hexA(fc,.45)}">${esc(c.field.split('/')[0])}</span>
       <div class="abbr">${esc(c.abbr)}</div>
       <div class="fname">${esc(c.name)}</div>
@@ -579,6 +596,82 @@ function renderPaged(list, listEl, pagerEl, state, htmlFn){
   });
 }
 
+/* ---------- 定位返回 & 独立名称查询 ---------- */
+function goConf(abbr){
+  try{ sessionStorage.setItem('ccf-ov', JSON.stringify({y: window.scrollY, c: abbr})); }catch(e){}
+  location.hash = '#/radar?c=' + encodeURIComponent(abbr);
+}
+function goBack(){ location.hash = '#/'; }  // 返回后由 renderOverview 恢复点击前位置
+window.goConf = goConf; window.goBack = goBack;
+
+/* 全局检索高亮：mode = sub(包含) / acr(首字母缩写) / fz(子序列) */
+function hlTitle(text, ql, mode){
+  if (mode === 'sub') return highlight(text, ql);
+  if (mode === 'acr'){
+    let out = '', qi = 0;
+    for (const w of String(text).split(/([A-Za-z0-9]+)/)){
+      if (/^[A-Za-z0-9]+$/.test(w) && qi < ql.length && w[0].toLowerCase() === ql[qi]){
+        out += '<mark>' + esc(w[0]) + '</mark>' + esc(w.slice(1)); qi++;
+      } else out += esc(w);
+    }
+    return out;
+  }
+  let out = '', qi = 0;
+  const t = String(text);
+  for (let i = 0; i < t.length; i++){
+    if (qi < ql.length && t[i].toLowerCase() === ql[qi]){ out += '<mark>' + esc(t[i]) + '</mark>'; qi++; }
+    else out += esc(t[i]);
+  }
+  return out;
+}
+
+/* ---------- standalone venue name search ---------- */
+function setupNameSearch(){
+  const inp = $('#nsearch-input'), drop = $('#nsearch-drop');
+  if (!inp) return;
+  window.__nsearchPh = ()=>{ inp.placeholder = `🔍 ${DS().unit}名模糊查询，选中直接进入 →`; };
+  function pick(abbr){
+    inp.blur(); inp.value = ''; drop.classList.remove('show');
+    try{ sessionStorage.removeItem('ccf-ov'); }catch(e){}   // 名称查询进入，不恢复旧滚动位置
+    location.hash = '#/radar?c=' + encodeURIComponent(abbr);
+  }
+  async function render(){
+    const q = inp.value.trim();
+    if (!q){ drop.classList.remove('show'); return; }
+    const idx = await loadIndex();
+    const ql = q.toLowerCase();
+    const scored = idx.confs.map(c=>{
+      const al = c.abbr.toLowerCase(), nl = c.name.toLowerCase();
+      let s = -1;
+      if (al.includes(ql)) s = 1000 + (al.startsWith(ql) ? 200 : 0) - al.length;
+      else if (nl.includes(ql)) s = 700 - nl.indexOf(ql) - nl.length*0.01;
+      else {
+        const acr = nl.split(/[^a-z0-9]+/).filter(Boolean).map(w=>w[0]).join('');
+        if (ql.length >= 2 && acr.startsWith(ql)) s = 500 - nl.length*0.01;
+        else if (ql.length >= 3){
+          const fm = Math.max(fuzzyScore(q, c.abbr), fuzzyScore(q, c.name));
+          if (fm >= ql.length * 9) s = fm;
+        }
+      }
+      return [s, c];
+    }).filter(x => x[0] >= 0).sort((a,b)=>b[0]-a[0]).slice(0, 12);
+    drop.innerHTML = scored.length ? scored.map(([s,c])=>`
+      <div class="ns-item" data-c="${esc(c.abbr)}">
+        <div class="ns-t"><b>${esc(c.abbr)}</b><span>${esc(c.name)}</span></div>
+        <div class="ns-m">${c.count.toLocaleString()} 篇 · ${esc(c.field)} · 点击进入 →</div>
+      </div>`).join('')
+      : `<div class="gs-more">没有匹配的${DS().unit}，换个关键词试试</div>`;
+    drop.classList.add('show');
+    $$('#nsearch-drop .ns-item').forEach(el => el.onmousedown = ()=> pick(el.dataset.c));
+  }
+  inp.addEventListener('input', render);
+  inp.addEventListener('keydown', e=>{
+    if (e.key === 'Enter'){ const f = drop.querySelector('.ns-item'); if (f) pick(f.dataset.c); }
+  });
+  inp.addEventListener('blur', ()=> setTimeout(()=>drop.classList.remove('show'), 200));
+  window.__nsearchPh();
+}
+
 /* ---------- global search ---------- */
 function setupGlobalSearch(){
   const inp = $('#gsearch-input'), drop = $('#gsearch-drop');
@@ -596,16 +689,25 @@ function setupGlobalSearch(){
       const scored = [];
       for (const it of g.p){
         const tl = it[0].toLowerCase();
-        let s;
-        if (tl.includes(ql)) s = 10000 + (tl.startsWith(ql)?500:0) - it[0].length*0.01;  // 包含匹配优先
-        else { s = fuzzyScore(q, it[0]); if (s < 0) continue; }                          // 子序列模糊兜底
-        scored.push([s, it]);
+        let s = -1, mode = '';
+        if (tl.includes(ql)){ s = 10000 + (tl.startsWith(ql)?500:0) - it[0].length*0.01; mode = 'sub'; }
+        else {
+          // 缩写首字母匹配，如 tdsc → Transactions on Dependable and Secure Computing
+          const acr = tl.split(/[^a-z0-9]+/).filter(Boolean).map(w=>w[0]).join('');
+          if (ql.length >= 2 && acr.startsWith(ql)){ s = 8000 - it[0].length*0.01; mode = 'acr'; }
+          else if (ql.length >= 5){        // 子序列模糊仅限较长关键词，且要求足够分数
+            const fz = fuzzyScore(q, it[0]);
+            if (fz >= ql.length * 8){ s = fz; mode = 'fz'; }
+          }
+        }
+        if (s < 0) continue;
+        scored.push([s, it, mode]);
         if (scored.length > 6000) break;
       }
       scored.sort((a,b)=>b[0]-a[0]);
       // 按会议分组
       const groups = new Map();
-      for (const [s, it] of scored){
+      for (const [s, it, mode] of scored){
         const conf = g.c[it[1]];
         if (!groups.has(conf)) groups.set(conf, []);
         groups.get(conf).push([s, it]);
@@ -618,15 +720,16 @@ function setupGlobalSearch(){
           <span class="gs-gname">${esc(conf)}</span>
           <span class="gs-gcnt">${items.length.toLocaleString()} 条 · 进入该${DS().unit}检索 →</span>
         </div>`;
-        for (const [s, it] of items.slice(0, 5)){
+        for (const [s, it, mode] of items.slice(0, 5)){
           html += `<div class="gs-item" data-u="${esc(it[4]||'')}" data-c="${esc(conf)}">
-            <div class="t">${highlight(it[0], q)}</div>
+            <div class="t">${hlTitle(it[0], ql, mode)}</div>
             <div class="m"><b>${esc(conf)}</b> · ${it[2]} · ${esc(topicName(it[3]))}</div>
           </div>`;
         }
       }
-      drop.innerHTML = (html || '<div class="gs-more">😕 无匹配论文</div>')
-        + `<div class="gs-more">共 ${scored.length.toLocaleString()} 条匹配 · 命中 ${groups.size} 个${DS().unit} · 点条目访问原文，点分组进${DS().unit}检索</div>`;
+      drop.innerHTML = html
+        ? html + `<div class="gs-more">共 ${scored.length.toLocaleString()} 条匹配 · 命中 ${groups.size} 个${DS().unit} · 点条目访问原文，点分组进${DS().unit}检索（<mark>高亮</mark>为命中词）</div>`
+        : '<div class="gs-more" style="padding:18px 14px">😕 没有匹配「' + esc(q) + '」的论文，换个关键词试试</div>';
       $$('.gs-item').forEach(el=>el.onmousedown=()=>{
         if (el.dataset.u) window.open(el.dataset.u, '_blank');
         else location.hash = '#/radar?c=' + encodeURIComponent(el.dataset.c);
@@ -764,6 +867,7 @@ function drawDDLList(){
   setupDSTabs();
   if (!isJournal()) await loadIndex();
   setupGlobalSearch();
+  setupNameSearch();
   route();
   window.addEventListener('resize', ()=>Object.values(S.charts).forEach(c=>c&&c.resize()));
 })();
