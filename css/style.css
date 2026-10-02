@@ -89,12 +89,16 @@ mark{background:transparent;color:var(--gold);font-weight:700}
 .panel-head h2{font-size:18px;font-weight:700}
 .panel-note{font-size:12px;color:var(--dim2)}
 .panel-tools{margin-left:auto;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.mini-select,#paper-search,#paper-author,#topic-search{background:var(--bg2);color:var(--txt);border:1px solid var(--line);
+.mini-select,#paper-search,#paper-author,#topic-search,#conf-q{background:var(--bg2);color:var(--txt);border:1px solid var(--line);
   border-radius:9px;padding:7px 10px;font-size:13px;outline:none}
 #paper-search{width:180px}
+.back-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:12px;border:1px solid #2a3866;background:#141b35;color:#c6d2f5;font-size:14px;font-weight:600;cursor:pointer;transition:all .22s;font-family:inherit;flex:none}
+.back-btn:hover{border-color:var(--acc);color:#fff;background:#182247;transform:translateX(-2px)}
+#conf-q{width:180px}
+
 #paper-author{width:150px}
 #topic-search{width:180px}
-#paper-search:focus,#paper-author:focus,#topic-search:focus{border-color:var(--acc);box-shadow:0 0 0 3px #5b8cff22}
+#paper-search:focus,#paper-author:focus,#topic-search:focus,#conf-q:focus{border-color:var(--acc);box-shadow:0 0 0 3px #5b8cff22}
 
 /* chips */
 .chips{display:flex;gap:8px;flex-wrap:wrap}
