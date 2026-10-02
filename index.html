@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CCF 论文雷达 · A/B 类会议 · 2023–2026</title>
 <meta name="description" content="CCF 推荐国际学术会议论文雷达：A/B 类会议 2023–2026 年论文主题分布、趋势与截稿时间一站检索">
-<link rel="stylesheet" href="css/style.css?v=20261002d">
-<script>window.__BUILD='20261002d';</script>
+<link rel="stylesheet" href="css/style.css?v=20261002e">
+<script>window.__BUILD='20261002e';</script>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📡</text></svg>">
 </head>
 <body>
@@ -21,9 +21,15 @@
       <a href="#/radar" data-nav="radar">会议雷达</a>
       <a href="#/ddl" data-nav="ddl">截稿日历</a>
     </nav>
-    <div class="gsearch" id="gsearch">
-      <input id="gsearch-input" type="text" placeholder="全局模糊检索论文…  ( / )" autocomplete="off">
-      <div class="gsearch-drop" id="gsearch-drop"></div>
+    <div class="hdr-right">
+      <div class="gsearch" id="gsearch">
+        <input id="gsearch-input" type="text" placeholder="全局模糊检索论文…  ( / )" autocomplete="off">
+        <div class="gsearch-drop" id="gsearch-drop"></div>
+      </div>
+      <div class="nsearch" id="nsearch">
+        <input id="nsearch-input" type="text" placeholder="🔍 期刊/会议名模糊查询…" autocomplete="off">
+        <div class="nsearch-drop" id="nsearch-drop"></div>
+      </div>
     </div>
   </div>
   <div class="ds-bar">
@@ -82,7 +88,7 @@
   <!-- ============ 会议雷达 ============ -->
   <section id="view-radar" class="view hidden">
     <div class="radar-head">
-      <button class="back-btn" onclick="location.hash='#/'" title="返回总览">← 返回</button>
+      <button class="back-btn" onclick="goBack()" title="返回点击前位置">← 返回</button>
       <div class="conf-picker" id="conf-picker">
         <input id="conf-picker-input" type="text" placeholder="输入会议名模糊搜索，如 SIGMOD、安全、CV…" autocomplete="off">
         <div class="conf-picker-drop" id="conf-picker-drop"></div>
@@ -197,6 +203,6 @@
 </footer>
 
 <script src="vendor/echarts.min.js"></script>
-<script src="js/app.js?v=20261002d"></script>
+<script src="js/app.js?v=20261002e"></script>
 </body>
 </html>
