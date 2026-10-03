@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CCF 论文雷达 · A/B 类会议 · 2023–2026</title>
 <meta name="description" content="CCF 推荐国际学术会议论文雷达：A/B 类会议 2023–2026 年论文主题分布、趋势与截稿时间一站检索">
-<link rel="stylesheet" href="css/style-20261002g.css">
+<link rel="stylesheet" href="css/style-20261002h.css">
 <script>
-window.__BUILD='20261002g';
+window.__BUILD='20261002h';
 window.__appBooted=false;
 setTimeout(function(){
   if (!window.__appBooted && !/[?&]bust=/.test(location.search)){
@@ -146,6 +146,25 @@ setTimeout(function(){
     </div>
   </section>
 
+  <!-- ============ 全局检索全量结果 ============ -->
+  <section id="view-gs" class="view hidden">
+    <div class="panel">
+      <div class="panel-head">
+        <h2>🔎 全局检索 <span class="count-badge" id="gs-q-badge"></span></h2>
+        <span class="panel-note" id="gs-note"></span>
+        <div class="panel-tools">
+          <select id="gs-pagesize" class="mini-select">
+            <option value="40" selected>40 条/页</option>
+            <option value="80">80 条/页</option>
+            <option value="120">120 条/页</option>
+          </select>
+        </div>
+      </div>
+      <div class="paper-list" id="gs-list"></div>
+      <div class="pager" id="gs-pager"></div>
+    </div>
+  </section>
+
   <!-- ============ 主题浏览 ============ -->
   <section id="view-topic" class="view hidden">
     <div class="panel">
@@ -213,6 +232,6 @@ setTimeout(function(){
 </footer>
 
 <script src="vendor/echarts.min.js"></script>
-<script src="js/app-20261002g.js"></script>
+<script src="js/app-20261002h.js"></script>
 </body>
 </html>
